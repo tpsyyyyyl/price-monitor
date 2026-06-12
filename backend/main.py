@@ -1,0 +1,83 @@
+import logging
+import os
+import time
+from contextlib import asynccontextmanager
+
+from dotenv import load_dotenv
+from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
+
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
+
+from . import ai, auth, routes_products
+from .database import Base, SessionLocal, engine
+from .scheduler import start_scheduler, stop_scheduler
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+logger = logging.getLogger("price_monitor")
+
+Base.metadata.create_all(bind=engine)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    start_scheduler()
+    try:
+        yield
+    finally:
+        stop_scheduler()
+
+
+app = FastAPI(title="Price Monitor", lifespan=lifespan)
+
+
+@app.middleware("http")
+async def log_requests(request, call_next):
+    started = time.monotonic()
+    response = await call_next(request)
+    if request.url.path.startswith("/api"):
+        logger.info(
+            "%s %s -> %d (%.0fms)",
+            request.method,
+            request.url.path,
+            response.status_code,
+            (time.monotonic() - started) * 1000,
+        )
+    return response
+
+
+@app.get("/api/health")
+def health():
+    db_ok = True
+    try:
+        with SessionLocal() as db:
+            db.execute(text("SELECT 1"))
+    except Exception:
+        db_ok = False
+    return {"status": "ok" if db_ok else "degraded", "db": db_ok, "model": ai.DEFAULT_MODEL_KEY}
+
+
+app.include_router(auth.router)
+app.include_router(routes_products.router)
+
+_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+if os.path.isdir(_dist):
+    app.mount("/assets", StaticFiles(directory=os.path.join(_dist, "assets")), name="assets")
+
+    _dist_root = os.path.realpath(_dist)
+    _index = os.path.join(_dist_root, "index.html")
+
+    # SPA fallback: client-side routes must serve index.html
+    @app.get("/{path:path}")
+    def spa(path: str):
+        if path:
+            file = os.path.realpath(os.path.join(_dist_root, path))
+            # contain the resolved path inside dist/ — block ../ traversal
+            if file.startswith(_dist_root + os.sep) and os.path.isfile(file):
+                return FileResponse(file)
+        return FileResponse(_index)
