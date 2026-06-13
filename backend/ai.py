@@ -200,7 +200,7 @@ Page text:
             model=model,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1,
-            max_tokens=256,
+            max_tokens=1024,
         )
         text = response.choices[0].message.content or ""
         data = _extract_json_object(text)
