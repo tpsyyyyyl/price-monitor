@@ -6,12 +6,33 @@ import re
 from bs4 import BeautifulSoup
 
 from . import ai
-from .scraper import adapters
 from .scraper.errors import FetchError  # noqa: F401 — re-exported for callers
 from .scraper.fetch import fetch_html
 
 _MAX_TEXT = 40000
 _PRICE_KEYS = {"price", "lowprice", "highprice", "pricecurrency"}
+
+
+def _coerce_price(raw) -> float:
+    """Turn an AI-returned price into a float, robust to any locale/currency.
+
+    Handles plain numbers, currency words/symbols (₴, грн, UAH, £, $, …), and
+    space/comma/dot thousand & decimal separators ("66 699 ₴", "1,099.00",
+    "15,99 €"). Raises ValueError if no number can be recovered.
+    """
+    if isinstance(raw, (int, float)):
+        return float(raw)
+    # Keep only digits and separators — drops letters, currency symbols, spaces.
+    s = re.sub(r"[^\d.,]", "", str(raw))
+    if "," in s and "." in s:
+        s = s.replace(",", "")  # comma = thousands separator
+    elif "," in s:
+        # Comma is decimal only when 1–2 digits trail it ("15,99"); else thousands.
+        s = s.replace(",", ".") if re.search(r",\d{1,2}$", s) else s.replace(",", "")
+    try:
+        return float(s)
+    except ValueError as e:
+        raise ValueError(f"Could not parse a price from {raw!r}") from e
 
 
 def _walk_json(obj, found):
@@ -112,17 +133,7 @@ def ai_scrape(url: str, target_name: str | None = None) -> dict:
     text = _html_to_text(html)
     data = ai.extract_product_price(text, target_name)
 
-    raw_price = data["price"]
-    if isinstance(raw_price, str):
-        try:
-            price = adapters.parse_price(raw_price)
-        except Exception as e:
-            raise ValueError(f"Could not parse price {raw_price!r}: {e}") from e
-    else:
-        try:
-            price = float(raw_price)
-        except (TypeError, ValueError) as e:
-            raise ValueError(f"Could not coerce price {raw_price!r} to float") from e
+    price = _coerce_price(data["price"])
 
     return {
         "name": data["name"],

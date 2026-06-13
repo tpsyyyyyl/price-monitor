@@ -1,5 +1,6 @@
 import csv
 import io
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -17,6 +18,7 @@ from .scraper.errors import FetchError, ParseError, UnsupportedSiteError
 from .scraper.runner import run_all
 from .scraper.service import scrape_product
 
+logger = logging.getLogger("price_monitor")
 router = APIRouter(prefix="/api", tags=["products"])
 
 
@@ -70,13 +72,10 @@ def create_product(
 
     if req.price is not None:
         # Фронтенд уже знає назву й ціну ("Track this result") — без мережі.
-        if isinstance(req.price, str):
-            try:
-                price = adapters.parse_price(req.price)
-            except ParseError as e:
-                raise HTTPException(status_code=422, detail=str(e))
-        else:
-            price = float(req.price)
+        try:
+            price = extract._coerce_price(req.price)
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=str(e))
         name = req.name or (urlparse(url).hostname or url)
         currency = req.currency or "USD"
         site = "ai"
@@ -93,7 +92,8 @@ def create_product(
                 result = extract.ai_scrape(url)
             except FetchError as e:
                 raise HTTPException(status_code=502, detail=str(e))
-            except ValueError:
+            except ValueError as e:
+                logger.info("AI price extraction failed for %s: %s", url, e)
                 raise HTTPException(
                     status_code=422,
                     detail="Не вдалося визначити ціну на цій сторінці",
