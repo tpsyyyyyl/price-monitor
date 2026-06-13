@@ -184,11 +184,13 @@ def extract_product_price(page_text: str, target_name: str | None = None) -> dic
     prompt = f"""You are a price extraction assistant. {task}
 
 Return ONLY a JSON object in this exact format, no explanation:
-{{"name": "<product name>", "price": <number>, "currency": "<GBP|USD|EUR>"}}
+{{"name": "<product name>", "price": <number>, "currency": "<ISO code>"}}
 
 Rules:
-- price must be a numeric value (no currency symbols).
-- currency is an ISO code like GBP, USD, EUR. Use "USD" if unknown.
+- price must be a numeric value (no currency symbols, no thousand separators).
+- currency is the ISO 4217 code actually used on the page (e.g. USD, EUR,
+  GBP, UAH, PLN). Use the page's real currency; only fall back to "USD" if
+  none is shown.
 
 Page text:
 {page_text[:15000]}"""
