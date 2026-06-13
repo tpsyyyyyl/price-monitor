@@ -22,7 +22,7 @@ export default function AddProductForm({ onAdded }) {
   }
 
   return (
-    <form onSubmit={submit} className="glass p-5">
+    <form onSubmit={submit} className="glass-strong p-5">
       <div className="flex flex-col gap-3 sm:flex-row">
         <input
           type="url"

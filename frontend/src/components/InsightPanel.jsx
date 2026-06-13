@@ -22,7 +22,7 @@ export default function InsightPanel({ productId }) {
   }, [productId])
 
   return (
-    <div className="glass p-6">
+    <div className="glass-strong p-6">
       <div className="flex items-center justify-between">
         <h2 className="font-sans font-bold text-strong">AI insight</h2>
         {insight && (

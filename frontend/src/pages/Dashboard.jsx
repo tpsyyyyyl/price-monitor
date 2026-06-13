@@ -76,7 +76,7 @@ export default function Dashboard() {
       </div>
 
       {scrapeMsg && (
-        <p className="glass mt-3 rounded-xl px-4 py-2 font-mono text-sm text-dim">
+        <p className="glass-strong mt-3 rounded-xl px-4 py-2 font-mono text-sm text-dim">
           {scrapeMsg}
         </p>
       )}
@@ -88,7 +88,7 @@ export default function Dashboard() {
       {error && <p className="mt-6 font-mono text-red-400">{error}</p>}
 
       {items && items.length === 0 && (
-        <div className="glass mt-10 border-dashed p-16 text-center">
+        <div className="glass-strong mt-10 border-dashed p-16 text-center">
           <p className="font-sans text-lg font-semibold text-strong">No products tracked yet</p>
           <p className="mt-2 text-sm text-dim">
             Add a product URL above, or seed demo data with{' '}
@@ -98,7 +98,7 @@ export default function Dashboard() {
       )}
 
       {items && items.length > 0 && (
-        <div className="glass mt-6 overflow-x-auto">
+        <div className="glass-strong mt-6 overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="border-b border-line text-xs uppercase tracking-wide text-faint">
               <tr>

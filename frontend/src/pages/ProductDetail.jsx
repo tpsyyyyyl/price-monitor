@@ -106,7 +106,7 @@ export default function ProductDetail() {
         )}
       </div>
 
-      <div className="glass mt-6 p-6">
+      <div className="glass-strong mt-6 p-6">
         <h2 className="font-sans font-bold text-strong">Price history</h2>
         {history === null && !error ? (
           <div className="flex h-72 items-center justify-center font-mono text-sm text-faint">Loading…</div>
