@@ -1,3 +1,46 @@
+import { useState } from 'react'
+
+const PRICE_KEY_RE = /price|cost|amount|ціна|вартість/i
+const PRICE_VAL_RE = /[£$€]\s?\d|\d+[.,]\d{2}/
+const NAME_KEY_RE = /name|title|product|назв/i
+
+function detectFields(item) {
+  const entries = Object.entries(item || {})
+
+  let priceKey = null
+  let nameKey = null
+
+  for (const [k, v] of entries) {
+    const strV = String(v)
+    if (!priceKey && (PRICE_KEY_RE.test(k) || PRICE_VAL_RE.test(strV))) {
+      priceKey = k
+    }
+    if (!nameKey && NAME_KEY_RE.test(k) && typeof v === 'string') {
+      nameKey = k
+    }
+  }
+
+  // fallback name: first string field that isn't the price field
+  if (!nameKey) {
+    for (const [k, v] of entries) {
+      if (typeof v === 'string' && k !== priceKey) {
+        nameKey = k
+        break
+      }
+    }
+  }
+
+  return { priceKey, nameKey }
+}
+
+function inferCurrency(priceStr) {
+  if (!priceStr) return undefined
+  if (priceStr.includes('£')) return 'GBP'
+  if (priceStr.includes('$')) return 'USD'
+  if (priceStr.includes('€')) return 'EUR'
+  return undefined
+}
+
 function renderValue(value) {
   if (typeof value === 'string' && value.startsWith('http')) {
     return (
@@ -24,8 +67,25 @@ function isEmpty(value) {
   return false
 }
 
-export default function ResultCard({ item }) {
+export default function ResultCard({ item, onTrack }) {
+  const [status, setStatus] = useState(null) // null | 'pending' | 'done' | 'error'
+  const [errorMsg, setErrorMsg] = useState('')
+
   const entries = Object.entries(item || {}).filter(([, v]) => !isEmpty(v))
+  const { priceKey, nameKey } = detectFields(item)
+  const isTrackable = onTrack && priceKey && nameKey
+
+  async function handleTrack() {
+    setStatus('pending')
+    setErrorMsg('')
+    try {
+      await onTrack(item)
+      setStatus('done')
+    } catch (err) {
+      setStatus('error')
+      setErrorMsg(err.status === 409 ? 'Already tracked' : (err.message || 'Error'))
+    }
+  }
 
   return (
     <div
@@ -42,6 +102,27 @@ export default function ResultCard({ item }) {
           </div>
         ))}
       </div>
+
+      {isTrackable && (
+        <div className="mt-3 flex items-center gap-2">
+          {status === 'done' ? (
+            <span className="text-xs text-accent-2">✓ Tracked</span>
+          ) : status === 'error' ? (
+            <span className="text-xs text-red-400">{errorMsg}</span>
+          ) : (
+            <button
+              onClick={handleTrack}
+              disabled={status === 'pending'}
+              className="rounded-md border border-line px-2 py-1 text-xs text-accent-2 transition hover:border-accent disabled:opacity-50"
+              style={{ transitionTimingFunction: 'var(--ease)' }}
+            >
+              {status === 'pending' ? 'Adding…' : 'Track'}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }
+
+export { detectFields, inferCurrency }

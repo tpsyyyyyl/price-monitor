@@ -34,15 +34,21 @@ def run_all(db: Session, jitter: bool = False) -> dict:
     failed = 0
     alerts = 0
 
+    from .. import extract  # локальний імпорт, щоб уникнути циклічного
+
     for product in products:
         try:
-            result = scrape_product(product.url)
+            if product.site == "ai":
+                result = extract.ai_scrape(product.url, target_name=product.name)
+                new_price = result["price"]
+            else:
+                new_price = scrape_product(product.url).price
         except Exception as e:
             failed += 1
             logger.warning("Скрейп не вдався для %s: %s", product.url, e)
             continue
 
-        price = _jitter_price(result.price) if jitter else result.price
+        price = _jitter_price(new_price) if jitter else new_price
 
         previous = product.points[-1].price if product.points else None
 

@@ -27,7 +27,7 @@ export default function AddProductForm({ onAdded }) {
         <input
           type="url"
           required
-          placeholder="https://books.toscrape.com/catalogue/…"
+          placeholder="Paste any product URL"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           className="w-full rounded-lg border border-line bg-ink/60 px-4 py-2.5 font-mono text-strong placeholder-faint outline-none transition focus:border-accent"
@@ -43,11 +43,7 @@ export default function AddProductForm({ onAdded }) {
       </div>
       {error && <p className="mt-3 font-mono text-sm text-red-400">{error}</p>}
       <p className="mt-3 text-xs text-faint">
-        Supported sites: <span className="text-dim">books.toscrape.com</span> and{' '}
-        <span className="text-dim">scrapeme.live</span>. Example:{' '}
-        <code className="font-mono text-dim">
-          https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
-        </code>
+        Works with any site — AI reads the price.
       </p>
     </form>
   )

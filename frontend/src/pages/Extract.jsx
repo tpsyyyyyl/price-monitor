@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { extractUrl } from '../api'
+import { extractUrl, trackProduct } from '../api'
+import { detectFields, inferCurrency } from '../components/ResultCard'
 import Shell from '../components/Shell'
 import ParticleField from '../components/ParticleField'
 import ResultCard from '../components/ResultCard'
@@ -84,6 +85,22 @@ export default function Extract() {
   const hasResults = results.length > 0
   const isErrorSource = data?.source === 'error'
 
+  const trackableCount = results.filter((r) => {
+    const { priceKey, nameKey } = detectFields(r)
+    return priceKey && nameKey
+  }).length
+
+  function handleTrack(item) {
+    const { priceKey, nameKey } = detectFields(item)
+    const priceVal = priceKey ? String(item[priceKey]) : undefined
+    return trackProduct({
+      url,
+      name: nameKey ? String(item[nameKey]) : undefined,
+      price: priceVal,
+      currency: inferCurrency(priceVal),
+    })
+  }
+
   return (
     <Shell>
       <ParticleField />
@@ -99,7 +116,7 @@ export default function Extract() {
           </p>
         </header>
 
-        <form onSubmit={onSubmit} className="glass mt-8 space-y-4 p-6">
+        <form onSubmit={onSubmit} className="glass-strong mt-8 space-y-4 p-6">
           <div>
             <label className="font-mono text-xs uppercase tracking-wider text-faint">
               URL
@@ -167,12 +184,19 @@ export default function Extract() {
                   {data.summary}
                 </div>
               )}
-              <p className="font-mono text-sm text-dim">
-                {results.length} result{results.length === 1 ? '' : 's'}
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-sm text-dim">
+                  {results.length} result{results.length === 1 ? '' : 's'}
+                </p>
+                {trackableCount > 0 && (
+                  <p className="text-sm text-faint">
+                    Found prices? Click Track on a card to monitor it in the Tracker.
+                  </p>
+                )}
+              </div>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {results.map((r, i) => (
-                  <ResultCard key={i} item={r} />
+                  <ResultCard key={i} item={r} onTrack={handleTrack} />
                 ))}
               </div>
             </div>

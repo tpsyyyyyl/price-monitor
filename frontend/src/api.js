@@ -48,6 +48,10 @@ export async function extractUrl(url, query) {
   return api('/api/extract', { method: 'POST', body: { url, query } })
 }
 
+export async function trackProduct({ url, name, price, currency }) {
+  return api('/api/products', { method: 'POST', body: { url, name, price, currency } })
+}
+
 export async function downloadCsv(productId, productName) {
   const res = await fetch(`/api/products/${productId}/export.csv`, {
     headers: { Authorization: `Bearer ${getToken()}` },

@@ -12,6 +12,7 @@
   --t-dim: #8a8fa8;
   --t-faint: #5b6075;
   --t-accent-soft: #818cf8;
+  --t-panel-strong: rgba(13, 13, 26, 0.92);
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -25,6 +26,7 @@
   --t-dim: #64748b;
   --t-faint: #94a3b8;
   --t-accent-soft: #4f46e5;
+  --t-panel-strong: rgba(255, 255, 255, 0.95);
 }
 
 @theme inline {
@@ -80,6 +82,15 @@ body {
   border: 1px solid var(--t-line);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  border-radius: 16px;
+}
+
+/* Opaque glass panel — for content sitting over the animated background */
+.glass-strong {
+  background: var(--t-panel-strong);
+  border: 1px solid var(--t-line);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: 16px;
 }
 

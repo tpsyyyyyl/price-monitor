@@ -6,10 +6,13 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from . import ai
+from urllib.parse import urlparse
+
+from . import ai, extract
 from .auth import get_current_user
 from .database import get_db
 from .models import PricePoint, Product, User, utcnow
+from .scraper import adapters
 from .scraper.errors import FetchError, ParseError, UnsupportedSiteError
 from .scraper.runner import run_all
 from .scraper.service import scrape_product
@@ -19,6 +22,9 @@ router = APIRouter(prefix="/api", tags=["products"])
 
 class CreateProductRequest(BaseModel):
     url: str
+    name: str | None = None
+    price: float | str | None = None
+    currency: str | None = None
 
 
 def _pct_change(current: float, previous: float | None) -> float | None:
@@ -62,25 +68,55 @@ def create_product(
     if db.query(Product).filter(Product.url == url).first():
         raise HTTPException(status_code=409, detail="This product is already tracked")
 
-    try:
-        result = scrape_product(url)
-    except UnsupportedSiteError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except FetchError as e:
-        raise HTTPException(status_code=502, detail=str(e))
-    except ParseError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+    if req.price is not None:
+        # Фронтенд уже знає назву й ціну ("Track this result") — без мережі.
+        if isinstance(req.price, str):
+            try:
+                price = adapters.parse_price(req.price)
+            except ParseError as e:
+                raise HTTPException(status_code=422, detail=str(e))
+        else:
+            price = float(req.price)
+        name = req.name or (urlparse(url).hostname or url)
+        currency = req.currency or "USD"
+        site = "ai"
+    else:
+        try:
+            adapters.detect_adapter(url)
+            result = scrape_product(url)
+            name = result.name
+            price = result.price
+            currency = result.currency
+            site = result.site
+        except UnsupportedSiteError:
+            try:
+                result = extract.ai_scrape(url)
+            except FetchError as e:
+                raise HTTPException(status_code=502, detail=str(e))
+            except ValueError:
+                raise HTTPException(
+                    status_code=422,
+                    detail="Не вдалося визначити ціну на цій сторінці",
+                )
+            name = result["name"]
+            price = result["price"]
+            currency = result["currency"]
+            site = result["site"]
+        except FetchError as e:
+            raise HTTPException(status_code=502, detail=str(e))
+        except ParseError as e:
+            raise HTTPException(status_code=422, detail=str(e))
 
     product = Product(
         url=url,
-        name=result.name,
-        site=result.site,
-        currency=result.currency,
+        name=name,
+        site=site,
+        currency=currency,
         last_checked_at=utcnow(),
     )
     db.add(product)
     db.flush()
-    db.add(PricePoint(product_id=product.id, price=result.price))
+    db.add(PricePoint(product_id=product.id, price=price))
     db.commit()
     return _summary(product)
 

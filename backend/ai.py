@@ -164,6 +164,59 @@ Page text:
         return {"results": [], "summary": "", "source": "error", "error": str(e)}
 
 
+def extract_product_price(page_text: str, target_name: str | None = None) -> dict:
+    """Витягує назву та поточну ціну товару зі сторінки через AI.
+
+    Якщо задано target_name — шукає ціну саме цього товару. Інакше визначає
+    головний товар сторінки та його назву й ціну.
+
+    Повертає {"name": str, "price": number, "currency": str}.
+    На БУДЬ-ЯКІЙ помилці (немає ключа, кривий JSON, нема ціни) кидає ValueError —
+    виклик обробляє це сам.
+    """
+    if target_name:
+        task = (
+            f'Find the CURRENT price of the item named "{target_name}" on this page.'
+        )
+    else:
+        task = "Identify the MAIN product on this page and its name and current price."
+
+    prompt = f"""You are a price extraction assistant. {task}
+
+Return ONLY a JSON object in this exact format, no explanation:
+{{"name": "<product name>", "price": <number>, "currency": "<GBP|USD|EUR>"}}
+
+Rules:
+- price must be a numeric value (no currency symbols).
+- currency is an ISO code like GBP, USD, EUR. Use "USD" if unknown.
+
+Page text:
+{page_text[:15000]}"""
+
+    try:
+        client = _get_client()
+        model = resolve_model(DEFAULT_MODEL_KEY)
+        response = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+            max_tokens=256,
+        )
+        text = response.choices[0].message.content or ""
+        data = _extract_json_object(text)
+    except Exception as e:
+        raise ValueError(f"AI price extraction failed: {e}") from e
+
+    if data.get("price") is None:
+        raise ValueError("AI returned no price")
+
+    return {
+        "name": data.get("name") or (target_name or ""),
+        "price": data["price"],
+        "currency": data.get("currency") or "USD",
+    }
+
+
 def price_insight(product, points) -> dict:
     """Повертає {trend, recommendation, summary, source}.
 

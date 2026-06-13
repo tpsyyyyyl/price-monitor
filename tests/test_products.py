@@ -88,11 +88,76 @@ def test_duplicate_url_conflict(token, mock_scrape):
     assert r.status_code == 409
 
 
-def test_unsupported_site(token, mock_scrape):
-    r = client.post(
-        "/api/products", json={"url": "https://example.com/x"}, headers=auth(token)
+def test_unsupported_site_falls_back_to_ai(token, mock_scrape, monkeypatch):
+    # невідомий хост → AI fallback створює товар із site="ai"
+    monkeypatch.setattr(
+        "backend.extract.ai_scrape",
+        lambda url, target_name=None: {
+            "name": "X",
+            "price": 9.99,
+            "currency": "USD",
+            "site": "ai",
+        },
     )
-    assert r.status_code == 400
+    r = client.post(
+        "/api/products",
+        json={"url": "https://example.com/ai-fallback"},
+        headers=auth(token),
+    )
+    assert r.status_code == 201
+    data = r.json()
+    assert data["site"] == "ai"
+    assert data["current_price"] == 9.99
+
+
+def test_track_with_provided_price(token):
+    # фронтенд передає вже відому назву+ціну — без мережі
+    r = client.post(
+        "/api/products",
+        json={
+            "url": "https://shop.example/item",
+            "name": "Cool Thing",
+            "price": "£12.34",
+        },
+        headers=auth(token),
+    )
+    assert r.status_code == 201
+    data = r.json()
+    assert data["site"] == "ai"
+    assert data["name"] == "Cool Thing"
+    assert abs(data["current_price"] - 12.34) < 0.001
+
+
+def test_runner_refreshes_ai_product(token, monkeypatch):
+    # створюємо ai-товар із відомою ціною
+    r = client.post(
+        "/api/products",
+        json={
+            "url": "https://shop.example/refresh-me",
+            "name": "Refreshable",
+            "price": 20.0,
+        },
+        headers=auth(token),
+    )
+    assert r.status_code == 201
+    pid = r.json()["id"]
+    before = len(client.get(f"/api/products/{pid}/history", headers=auth(token)).json())
+
+    monkeypatch.setattr(
+        "backend.extract.ai_scrape",
+        lambda url, target_name=None: {
+            "name": "Refreshable",
+            "price": 25.0,
+            "currency": "USD",
+            "site": "ai",
+        },
+    )
+    r = client.post("/api/scrape", headers=auth(token))
+    assert r.json()["scraped"] >= 1
+
+    points = client.get(f"/api/products/{pid}/history", headers=auth(token)).json()
+    assert len(points) == before + 1
+    assert points[-1]["price"] == 25.0
 
 
 def test_history_and_pct_change(token, mock_scrape, monkeypatch):

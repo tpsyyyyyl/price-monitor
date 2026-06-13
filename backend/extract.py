@@ -5,6 +5,7 @@ import re
 from bs4 import BeautifulSoup
 
 from . import ai
+from .scraper import adapters
 from .scraper.errors import FetchError  # noqa: F401 — re-exported for callers
 from .scraper.fetch import fetch_html
 
@@ -37,3 +38,35 @@ def extract_from_url(url: str, query: str) -> dict:
     result = ai.extract_items(text, query)
     result["count"] = len(result.get("results", []))
     return result
+
+
+def ai_scrape(url: str, target_name: str | None = None) -> dict:
+    """Скрейп будь-якого сайту через AI: fetch → text → витяг назви й ціни.
+
+    Пробрасує FetchError, якщо сторінку не завантажити. Кидає ValueError, якщо
+    ціну не вдалося визначити чи перетворити на число.
+
+    Повертає {"name": str, "price": float, "currency": str, "site": "ai"}.
+    """
+    html = fetch_html(url)
+    text = _html_to_text(html)
+    data = ai.extract_product_price(text, target_name)
+
+    raw_price = data["price"]
+    if isinstance(raw_price, str):
+        try:
+            price = adapters.parse_price(raw_price)
+        except Exception as e:
+            raise ValueError(f"Could not parse price {raw_price!r}: {e}") from e
+    else:
+        try:
+            price = float(raw_price)
+        except (TypeError, ValueError) as e:
+            raise ValueError(f"Could not coerce price {raw_price!r} to float") from e
+
+    return {
+        "name": data["name"],
+        "price": price,
+        "currency": data["currency"],
+        "site": "ai",
+    }
