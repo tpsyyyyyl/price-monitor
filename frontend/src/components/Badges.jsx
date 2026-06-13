@@ -18,7 +18,7 @@ export function PctBadge({ pct }) {
   return (
     <span
       title={title}
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${className}`}
+      className={`inline-flex items-center gap-1 rounded-full border border-line px-2.5 py-0.5 font-mono text-xs font-semibold backdrop-blur-sm ${className}`}
     >
       <span aria-hidden>{arrow}</span>
       {pct === null || pct === undefined ? 'new' : label}
@@ -28,7 +28,7 @@ export function PctBadge({ pct }) {
 
 export function SiteBadge({ site }) {
   return (
-    <span className="rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-medium text-accent-soft">
+    <span className="rounded-full border border-line bg-accent/10 px-2.5 py-0.5 font-mono text-xs font-medium text-accent-soft backdrop-blur-sm">
       {SITE_LABEL[site] ?? site}
     </span>
   )

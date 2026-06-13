@@ -42,27 +42,35 @@ export default function ProductDetail() {
   if (error) {
     return (
       <Shell>
-        <Link to="/" className="text-sm text-dim hover:text-strong">
+        <Link
+          to="/"
+          className="text-sm text-dim transition-colors hover:text-strong"
+          style={{ transition: `color 0.15s var(--ease)` }}
+        >
           ← Back to dashboard
         </Link>
-        <p className="mt-4 text-red-400">{error}</p>
+        <p className="mt-4 font-mono text-red-400">{error}</p>
       </Shell>
     )
   }
 
   return (
     <Shell>
-      <Link to="/" className="text-sm text-dim hover:text-strong">
+      <Link
+        to="/"
+        className="text-sm text-dim transition-colors hover:text-accent"
+        style={{ transition: `color 0.15s var(--ease)` }}
+      >
         ← Back to dashboard
       </Link>
 
       <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-strong">{product?.name ?? 'Loading…'}</h1>
+          <h1 className="font-sans text-2xl font-bold text-strong">{product?.name ?? 'Loading…'}</h1>
           {product && (
             <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
               <SiteBadge site={product.site} />
-              <span className="font-semibold text-strong">
+              <span className="font-mono font-semibold text-strong">
                 {formatPrice(product.current_price, product.currency)}
               </span>
               <PctBadge pct={product.pct_change} />
@@ -70,7 +78,8 @@ export default function ProductDetail() {
                 href={product.url}
                 target="_blank"
                 rel="noreferrer"
-                className="text-dim underline-offset-2 hover:text-strong hover:underline"
+                className="text-dim transition-colors underline-offset-2 hover:text-accent hover:underline"
+                style={{ transition: `color 0.15s var(--ease)` }}
               >
                 View source ↗
               </a>
@@ -81,13 +90,15 @@ export default function ProductDetail() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => downloadCsv(product.id, product.name)}
-              className="rounded-lg border border-line px-4 py-2 text-sm font-medium text-body transition hover:border-dim hover:text-strong"
+              className="rounded-lg border border-line px-4 py-2 text-sm font-medium text-body transition hover:border-accent hover:text-strong"
+              style={{ transition: `all 0.15s var(--ease)` }}
             >
               Export CSV
             </button>
             <button
               onClick={remove}
               className="rounded-lg border border-line px-4 py-2 text-sm font-medium text-dim transition hover:border-red-500/50 hover:text-red-400"
+              style={{ transition: `all 0.15s var(--ease)` }}
             >
               Delete
             </button>
@@ -95,10 +106,10 @@ export default function ProductDetail() {
         )}
       </div>
 
-      <div className="mt-6 rounded-2xl border border-line bg-panel p-6">
-        <h2 className="font-bold text-strong">Price history</h2>
+      <div className="glass mt-6 p-6">
+        <h2 className="font-sans font-bold text-strong">Price history</h2>
         {history === null && !error ? (
-          <div className="flex h-72 items-center justify-center text-sm text-faint">Loading…</div>
+          <div className="flex h-72 items-center justify-center font-mono text-sm text-faint">Loading…</div>
         ) : (
           <PriceChart history={history} currency={product?.currency} />
         )}

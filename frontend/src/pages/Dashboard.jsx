@@ -49,8 +49,8 @@ export default function Dashboard() {
     <Shell>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-strong">Tracked products</h1>
-          <p className="mt-1 text-sm text-dim">
+          <h1 className="font-sans text-2xl font-bold text-strong">Tracked products</h1>
+          <p className="mt-1 font-mono text-sm text-dim">
             {items ? `${items.length} tracked` : 'Loading…'}
           </p>
         </div>
@@ -58,7 +58,8 @@ export default function Dashboard() {
           <button
             onClick={() => scrape(false)}
             disabled={scrapeBusy}
-            className="rounded-xl bg-accent px-5 py-2.5 font-semibold text-white shadow-lg shadow-accent/30 transition hover:bg-accent-soft disabled:opacity-50"
+            className="glow rounded-xl bg-accent px-5 py-2.5 font-semibold text-white transition disabled:opacity-50"
+            style={{ transition: `all 0.2s var(--ease)` }}
           >
             {scrapeBusy ? 'Working…' : 'Scrape now'}
           </button>
@@ -66,7 +67,8 @@ export default function Dashboard() {
             onClick={() => scrape(true)}
             disabled={scrapeBusy}
             title="Demo only: re-checks prices but nudges them randomly so you can see changes and alerts"
-            className="rounded-xl border border-line px-4 py-2.5 font-medium text-body transition hover:border-dim hover:text-strong disabled:opacity-50"
+            className="rounded-xl border border-line px-4 py-2.5 font-medium text-body transition hover:border-accent hover:text-strong disabled:opacity-50"
+            style={{ transition: `all 0.2s var(--ease)` }}
           >
             Simulate change
           </button>
@@ -74,7 +76,7 @@ export default function Dashboard() {
       </div>
 
       {scrapeMsg && (
-        <p className="mt-3 rounded-lg border border-line bg-panel px-4 py-2 text-sm text-dim">
+        <p className="glass mt-3 rounded-xl px-4 py-2 font-mono text-sm text-dim">
           {scrapeMsg}
         </p>
       )}
@@ -83,20 +85,20 @@ export default function Dashboard() {
         <AddProductForm onAdded={onAdded} />
       </div>
 
-      {error && <p className="mt-6 text-red-400">{error}</p>}
+      {error && <p className="mt-6 font-mono text-red-400">{error}</p>}
 
       {items && items.length === 0 && (
-        <div className="mt-10 rounded-2xl border border-dashed border-line p-16 text-center">
-          <p className="text-lg font-semibold text-strong">No products tracked yet</p>
+        <div className="glass mt-10 border-dashed p-16 text-center">
+          <p className="font-sans text-lg font-semibold text-strong">No products tracked yet</p>
           <p className="mt-2 text-sm text-dim">
             Add a product URL above, or seed demo data with{' '}
-            <code className="text-faint">python -m backend.seed_demo</code>.
+            <code className="font-mono text-faint">python -m backend.seed_demo</code>.
           </p>
         </div>
       )}
 
       {items && items.length > 0 && (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-line bg-panel">
+        <div className="glass mt-6 overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="border-b border-line text-xs uppercase tracking-wide text-faint">
               <tr>
@@ -110,11 +112,15 @@ export default function Dashboard() {
             </thead>
             <tbody>
               {items.map((p) => (
-                <tr key={p.id} className="border-b border-line last:border-0 hover:bg-ink/40">
+                <tr
+                  key={p.id}
+                  className="border-b border-line last:border-0 transition-colors hover:bg-accent/5"
+                  style={{ transition: `background-color 0.15s var(--ease)` }}
+                >
                   <td className="px-5 py-3">
                     <Link
                       to={`/product/${p.id}`}
-                      className="font-medium text-strong hover:text-accent-soft"
+                      className="font-medium text-strong transition-colors hover:text-accent"
                     >
                       {p.name}
                     </Link>
@@ -122,18 +128,19 @@ export default function Dashboard() {
                   <td className="px-5 py-3">
                     <SiteBadge site={p.site} />
                   </td>
-                  <td className="px-5 py-3 font-semibold text-strong">
+                  <td className="px-5 py-3 font-mono font-semibold text-strong">
                     {formatPrice(p.current_price, p.currency)}
                   </td>
                   <td className="px-5 py-3">
                     <PctBadge pct={p.pct_change} />
                   </td>
-                  <td className="px-5 py-3 text-dim">{formatRelative(p.last_checked_at)}</td>
+                  <td className="px-5 py-3 font-mono text-dim">{formatRelative(p.last_checked_at)}</td>
                   <td className="px-5 py-3 text-right">
                     <button
                       onClick={() => remove(p.id, p.name)}
                       title="Stop tracking"
                       className="rounded-lg border border-line px-3 py-1.5 text-dim transition hover:border-red-500/50 hover:text-red-400"
+                      style={{ transition: `all 0.15s var(--ease)` }}
                     >
                       ✕
                     </button>

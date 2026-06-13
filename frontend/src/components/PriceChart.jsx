@@ -17,8 +17,11 @@ function ChartTooltip({ active, payload, currency }) {
   if (!active || !payload || !payload.length) return null
   const point = payload[0].payload
   return (
-    <div className="rounded-lg border border-line bg-panel px-3 py-2 text-xs shadow-lg">
-      <p className="text-faint">
+    <div
+      className="glass rounded-xl px-3 py-2 text-xs shadow-lg"
+      style={{ borderRadius: '10px' }}
+    >
+      <p className="font-mono text-faint">
         {new Date(point.scraped_at).toLocaleString('en-GB', {
           day: '2-digit',
           month: 'short',
@@ -26,7 +29,7 @@ function ChartTooltip({ active, payload, currency }) {
           minute: '2-digit',
         })}
       </p>
-      <p className="mt-0.5 font-semibold text-strong">{formatPrice(point.price, currency)}</p>
+      <p className="mt-0.5 font-mono font-semibold text-strong">{formatPrice(point.price, currency)}</p>
     </div>
   )
 }
@@ -34,7 +37,7 @@ function ChartTooltip({ active, payload, currency }) {
 export default function PriceChart({ history, currency }) {
   if (!history || history.length === 0) {
     return (
-      <div className="flex h-72 items-center justify-center text-sm text-faint">
+      <div className="flex h-72 items-center justify-center font-mono text-sm text-faint">
         No price history yet.
       </div>
     )
@@ -52,18 +55,18 @@ export default function PriceChart({ history, currency }) {
     <div className="h-72 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={history} margin={{ top: 10, right: 16, bottom: 0, left: -8 }}>
-          <CartesianGrid stroke="var(--t-line)" vertical={false} />
+          <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
           <XAxis
             dataKey="scraped_at"
             tickFormatter={fmtDate}
-            stroke="var(--t-faint)"
-            tick={{ fontSize: 12 }}
+            stroke="transparent"
+            tick={{ fontSize: 12, fill: '#8a8fa8', fontFamily: 'Roboto Mono, monospace' }}
             minTickGap={24}
           />
           <YAxis
             domain={domain}
-            stroke="var(--t-faint)"
-            tick={{ fontSize: 12 }}
+            stroke="transparent"
+            tick={{ fontSize: 12, fill: '#8a8fa8', fontFamily: 'Roboto Mono, monospace' }}
             tickFormatter={(v) => formatPrice(v, currency)}
             width={64}
           />
@@ -71,10 +74,10 @@ export default function PriceChart({ history, currency }) {
           <Line
             type="monotone"
             dataKey="price"
-            stroke="var(--color-accent)"
+            stroke="#6366f1"
             strokeWidth={2}
             dot={false}
-            activeDot={{ r: 4 }}
+            activeDot={{ r: 4, fill: '#6366f1', stroke: 'rgba(99,102,241,0.3)', strokeWidth: 4 }}
           />
         </LineChart>
       </ResponsiveContainer>

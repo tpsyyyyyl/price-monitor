@@ -118,6 +118,52 @@ def _heuristic_insight(product, points) -> dict:
     }
 
 
+def extract_items(page_text: str, query: str) -> dict:
+    """Витягує список елементів з тексту сторінки за запитом користувача.
+
+    Повертає {results, summary, source, count}.
+    За будь-якої помилки повертає порожній результат з source="error" — ніколи не кидає.
+    """
+    prompt = f"""You are a web data extraction assistant. Extract items from the page text below that match the user's query.
+
+User query: {query}
+
+Return ONLY a JSON object in this exact format, no explanation:
+{{"results": [{{"<field>": "<value>"}}], "summary": "<one sentence describing what was found>"}}
+
+Rules:
+- Maximum 40 items in results.
+- Fields must be consistent across all items (same keys).
+- Keep values short and factual.
+- If nothing matches, return empty results array with a summary saying so.
+
+Page text:
+{page_text[:15000]}"""
+
+    try:
+        client = _get_client()
+        model = resolve_model(DEFAULT_MODEL_KEY)
+        response = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2,
+            max_tokens=2048,
+        )
+        text = response.choices[0].message.content or ""
+        data = _extract_json_object(text)
+        results = data.get("results", [])
+        if not isinstance(results, list):
+            results = []
+        return {
+            "results": results,
+            "summary": data.get("summary", ""),
+            "source": "ai",
+        }
+    except Exception as e:
+        logger.info("extract_items AI unavailable (%s) — returning empty result.", e)
+        return {"results": [], "summary": "", "source": "error", "error": str(e)}
+
+
 def price_insight(product, points) -> dict:
     """Повертає {trend, recommendation, summary, source}.
 

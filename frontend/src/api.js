@@ -44,6 +44,10 @@ export async function api(path, { method = 'GET', body } = {}) {
   return res.json()
 }
 
+export async function extractUrl(url, query) {
+  return api('/api/extract', { method: 'POST', body: { url, query } })
+}
+
 export async function downloadCsv(productId, productName) {
   const res = await fetch(`/api/products/${productId}/export.csv`, {
     headers: { Authorization: `Bearer ${getToken()}` },

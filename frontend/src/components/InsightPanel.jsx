@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { api } from '../api'
 
 const TREND = {
-  up: { arrow: '↑', className: 'text-red-400', label: 'Trending up' },
-  down: { arrow: '↓', className: 'text-emerald-400', label: 'Trending down' },
+  up: { arrow: '↑', className: 'text-accent-3', label: 'Trending up' },
+  down: { arrow: '↓', className: 'text-accent-2', label: 'Trending down' },
   stable: { arrow: '→', className: 'text-dim', label: 'Stable' },
 }
 
@@ -22,17 +22,17 @@ export default function InsightPanel({ productId }) {
   }, [productId])
 
   return (
-    <div className="rounded-2xl border border-line bg-panel p-6">
+    <div className="glass p-6">
       <div className="flex items-center justify-between">
-        <h2 className="font-bold text-strong">AI insight</h2>
+        <h2 className="font-sans font-bold text-strong">AI insight</h2>
         {insight && (
-          <span className="rounded-full bg-slate-500/15 px-2.5 py-0.5 text-xs font-medium uppercase tracking-wide text-dim">
+          <span className="rounded-full border border-line bg-panel px-2.5 py-0.5 font-mono text-xs font-medium uppercase tracking-wide text-dim backdrop-blur-sm">
             {insight.source}
           </span>
         )}
       </div>
 
-      {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
+      {error && <p className="mt-4 font-mono text-sm text-red-400">{error}</p>}
 
       {!insight && !error && (
         <div className="mt-4 animate-pulse space-y-3">

@@ -11,7 +11,7 @@ from sqlalchemy import text
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
 
-from . import ai, auth, routes_products
+from . import ai, auth, routes_extract, routes_products
 from .database import Base, SessionLocal, engine
 from .scheduler import start_scheduler, stop_scheduler
 
@@ -64,6 +64,7 @@ def health():
 
 app.include_router(auth.router)
 app.include_router(routes_products.router)
+app.include_router(routes_extract.router)
 
 _dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
 if os.path.isdir(_dist):

@@ -7,6 +7,7 @@ import { applyStoredTheme } from './useTheme'
 
 applyStoredTheme()
 import Login from './pages/Login'
+import Extract from './pages/Extract'
 import Dashboard from './pages/Dashboard'
 import ProductDetail from './pages/ProductDetail'
 
@@ -19,7 +20,8 @@ createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/" element={<Private><Dashboard /></Private>} />
+        <Route path="/" element={<Private><Extract /></Private>} />
+        <Route path="/tracker" element={<Private><Dashboard /></Private>} />
         <Route path="/product/:id" element={<Private><ProductDetail /></Private>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

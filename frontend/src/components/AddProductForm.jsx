@@ -22,7 +22,7 @@ export default function AddProductForm({ onAdded }) {
   }
 
   return (
-    <form onSubmit={submit} className="rounded-2xl border border-line bg-panel p-5">
+    <form onSubmit={submit} className="glass p-5">
       <div className="flex flex-col gap-3 sm:flex-row">
         <input
           type="url"
@@ -30,20 +30,22 @@ export default function AddProductForm({ onAdded }) {
           placeholder="https://books.toscrape.com/catalogue/…"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          className="w-full rounded-lg border border-line bg-ink px-4 py-2.5 text-strong placeholder-faint outline-none transition focus:border-accent"
+          className="w-full rounded-lg border border-line bg-ink/60 px-4 py-2.5 font-mono text-strong placeholder-faint outline-none transition focus:border-accent"
+          style={{ transition: `border-color 0.15s var(--ease)` }}
         />
         <button
           disabled={busy}
-          className="shrink-0 rounded-lg bg-accent px-6 py-2.5 font-semibold text-white transition hover:bg-accent-soft disabled:opacity-50"
+          className="glow shrink-0 rounded-lg bg-accent px-6 py-2.5 font-semibold text-white transition disabled:opacity-50"
+          style={{ transition: `all 0.15s var(--ease)` }}
         >
           {busy ? 'Adding…' : 'Track product'}
         </button>
       </div>
-      {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
+      {error && <p className="mt-3 font-mono text-sm text-red-400">{error}</p>}
       <p className="mt-3 text-xs text-faint">
         Supported sites: <span className="text-dim">books.toscrape.com</span> and{' '}
         <span className="text-dim">scrapeme.live</span>. Example:{' '}
-        <code className="text-dim">
+        <code className="font-mono text-dim">
           https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html
         </code>
       </p>
